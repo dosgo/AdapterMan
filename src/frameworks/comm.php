@@ -1,5 +1,4 @@
 <?php
-define('WEB_ROOT',"/mnt/d/www/ninekedev/webapp/web/nineke/");
 if(extension_loaded('swoole')){
      \Workerman\Worker::$eventLoopClass = 'Workerman\Events\Swoole';
 }

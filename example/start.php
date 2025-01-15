@@ -3,10 +3,11 @@ use Adapterman\Adapterman;
 use Adapterman\Http;
 use Workerman\Worker;
 use Workerman\Timer;
-require_once './workerman/Autoloader.php';
+
+define('WEB_ROOT',"/cygdrive/d/www/ninekedev/webapp/web/nineke/");
+
+require_once __DIR__.'/workerman/Autoloader.php';
 require_once 'autoload.php';
-
-
 Adapterman::init();
 
 require __DIR__ . '/../src/frameworks/comm.php';
