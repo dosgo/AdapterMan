@@ -164,7 +164,9 @@ class Http
      */
     public static function header(string $content, bool $replace = true, int $http_response_code = 0): void
     {
-        if (\str_starts_with($content, 'HTTP')) {
+        
+
+        if(\substr($content, 0, strlen("HTTP")) === "HTTP"){
             static::$status = $content;
 
             return;
@@ -211,8 +213,7 @@ class Http
      * @param  int  $code The response code
      * @return bool|int The valid status code or FALSE if code is not provided and it is not invoked in a web server environment
      */
-    public static function responseCode(int $code): bool|int
-    {
+    public static function responseCode(int $code): int{
         if (isset(static::CODES[$code])) {
             static::$status = "HTTP/1.1 $code " . static::CODES[$code];
 
@@ -237,7 +238,7 @@ class Http
         string $domain = '',
         bool   $secure = false,
         bool   $httponly = false,
-        string $samesite = '',
+        string $samesite = ''
     ): bool
     {
         if (! static::checkCookieSamesite($samesite)) {
@@ -269,7 +270,7 @@ class Http
      */
     public static function headers_list(): array
     {
-        return [...static::$cookies, ...static::$headers];
+        return array_merge(static::$cookies, static::$headers);
     }
 
     /**
@@ -412,22 +413,71 @@ class Http
 
         // Parse $_POST.
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_SERVER['CONTENT_TYPE']) {
+            /*
             match ($_SERVER['CONTENT_TYPE']) {
                 'multipart/form-data' => static::parseMultipart($http_body, $http_post_boundary),
                 'application/json' => $_POST = \json_decode($http_body, true, flags: \JSON_THROW_ON_ERROR) ?? [],
                 'application/x-www-form-urlencoded' => \parse_str($http_body, $_POST),
                 default => ''
-            };
+            };*/
+            switch ($_SERVER['CONTENT_TYPE']) {
+                case 'multipart/form-data':
+                    static::parseMultipart($http_body, $http_post_boundary);
+                    break;
+            
+                case 'application/json':
+                    $_POST = json_decode($http_body, true);
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        // 处理 JSON 解析错误
+                        throw new \Exception('JSON decode error: ' . json_last_error_msg());
+                    }
+                    $_POST = $_POST ?? [];
+                    break;
+            
+                case 'application/x-www-form-urlencoded':
+                    parse_str($http_body, $_POST);
+                    break;
+            
+                default:
+                    // 如果需要处理其他内容类型，可以在这里添加更多 case 分支
+                    break;
+            }
+            
         }
 
         // Parse other HTTP action parameters
         if ($_SERVER['REQUEST_METHOD'] !== 'GET' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
             $data = [];
+            
+            /*
             match ($_SERVER['CONTENT_TYPE']) {
                 'application/x-www-form-urlencoded' => \parse_str($http_body, $data),
                 'application/json' => $data = \json_decode($http_body, true, flags: \JSON_THROW_ON_ERROR) ?? [],
                 default => ''
-            };
+            };*/
+
+            switch ($_SERVER['CONTENT_TYPE']) {
+                case 'application/x-www-form-urlencoded':
+                    parse_str($http_body, $data);
+                    break;
+            
+                case 'application/json':
+                    // 使用 try-catch 来处理 JSON 解析错误
+                    try {
+                        $data = json_decode($http_body, true);
+                        if (json_last_error() !== JSON_ERROR_NONE) {
+                            throw new \Exception('JSON decode error: ' . json_last_error_msg());
+                        }
+                    } catch (\Exception $e) {
+                        // 处理异常（例如记录日志或设置默认值）
+                        $data = [];
+                    }
+                    break;
+            
+                default:
+                    $data = [];
+                    break;
+            }
             $_REQUEST = $data;
         }
 
@@ -444,8 +494,8 @@ class Http
         }
 
         // REQUEST
-        $_REQUEST = [...$_GET, ...$_POST, ...$_REQUEST];
-
+      //  $_REQUEST = [...$_GET, ...$_POST, ...$_REQUEST];
+        $_REQUEST = array_merge($_GET, $_POST, $_REQUEST);
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             static::$cache[$recv_buffer]['decode'] = [
                 'get'    => $_GET,

@@ -50,12 +50,21 @@ class Adapterman
     public static function init(): void
     {
         try {
-            self::checkVersion();
-            self::checkFunctionsDisabled();
+            if(\PHP_MAJOR_VERSION>=8){
+                self::checkVersion();
+                self::checkFunctionsDisabled();
 
-            // OK initialize the functions
-            require __DIR__ . '/functions/AdapterFunctions.php';
-            require __DIR__ . '/functions/AdapterSessionFunctions.php';
+                // OK initialize the functions
+                require __DIR__ . '/functions/AdapterFunctions.php';
+                require __DIR__ . '/functions/AdapterSessionFunctions.php';
+            }else{
+                if (!extension_loaded('uopz')) {
+                    throw new Exception("PHP7 requires uopz extension");
+                }
+                require __DIR__ . '/functions/AdapterFunctionsUopz.php';
+                require __DIR__ . '/functions/AdapterSessionFunctionsUopz.php';
+            }
+
             class_alias(Http::class, \Protocols\Http::class);
             Http::init();
 

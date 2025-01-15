@@ -77,7 +77,7 @@ trait Session
             if (\preg_match('/^\d+;(.*)$/', $savePath, $match)) {
                 $savePath = $match[1];
             }
-            if (! $savePath || \str_starts_with($savePath, 'tcp://')) {
+            if (! $savePath || substr($savePath, 0, strlen("tcp://")) === "tcp://") {
                 $savePath = \sys_get_temp_dir();
             }
             static::$sessionSavePath = $savePath;
@@ -139,7 +139,7 @@ trait Session
      * Session create id.
      * @see https://www.php.net/manual/en/function.session-create-id.php
      */
-    public static function sessionCreateId(string $prefix = ''): string|false
+    public static function sessionCreateId(string $prefix = ''): string
     {
         // if ($prefix === '') {
 
@@ -152,7 +152,7 @@ trait Session
      *
      * @see https://www.php.net/manual/en/function.session-id.php
      */
-    public static function sessionId(?string $id = null): string|false
+    public static function sessionId(?string $id = null): string
     {
         if ($id === null) {
             if (static::sessionStarted() && static::$sessionFile) {
@@ -171,7 +171,7 @@ trait Session
      * Get and/or set the current session name.
      * @see https://www.php.net/manual/en/function.session-name.php
      */
-    public static function sessionName(?string $name = null): string|false
+    public static function sessionName(?string $name = null): string
     {
         if ($name === null) {
             return static::$sessionName;
@@ -191,7 +191,7 @@ trait Session
      * 
      * @see https://www.php.net/manual/en/function.session-save-path.php
      */
-    public static function sessionSavePath(?string $path = null): string|false
+    public static function sessionSavePath(?string $path = null): string
     {
         if ($path === null) {
             return static::$sessionSavePath;
@@ -319,7 +319,7 @@ trait Session
      * @return boolean Returns **true** on success or **false** on failure.
      */
     public static function sessionSetCookieParams(
-        int|array $lifetime_or_options,
+         $lifetime_or_options,
         ?string   $path = null,
         ?string   $domain = null,
         ?bool     $secure = null,
